@@ -75,6 +75,40 @@ ORDER BY
 """, conn)
 print(avg_rentals_by_seasons)
 
+
+# Fetch max rentals by temperature category with added debugging
+max_rentals_by_temp = pd.read_sql("""
+SELECT 
+    Temperature_Category,
+    MAX(Rented_Bike_Count) AS max_rentals
+FROM bike_data
+GROUP BY Temperature_Category
+ORDER BY 
+    CASE 
+        WHEN Temperature_Category = 'Cold (< 0°C)' THEN 1
+        WHEN Temperature_Category = 'Cool (0°C - 9°C)' THEN 2
+        WHEN Temperature_Category = 'Mild (10°C - 19°C)' THEN 3
+        WHEN Temperature_Category = 'Warm (20°C - 29°C)' THEN 4
+        WHEN Temperature_Category = 'Hot (>=30°C)' THEN 5
+    END;
+""", conn)
+
+# Debugging: Inspect the rows contributing to max rentals
+for category in max_rentals_by_temp['Temperature_Category']:
+    category_data = pd.read_sql(f"""
+    SELECT *
+    FROM bike_data
+    WHERE Temperature_Category = '{category}'
+    ORDER BY Rented_Bike_Count DESC
+    LIMIT 5;
+    """, conn)
+    print(f"Top rentals in category {category}:")
+    print(category_data)
+
+# Print the final results
+print(max_rentals_by_temp)
+
+
 # Close the connection when done
 conn.close()
 
